@@ -38,7 +38,9 @@ export function lineChart(series, options = {}) {
   const values = series.values;
   let min = Math.min(...values);
   let max = Math.max(...values);
-  if (min > 0) min = Math.min(0, min - (max - min) * 0.15);
+  // Narrow-range series (life expectancy, HDI) get a zoomed axis so the
+  // trend is visible; a series that goes negative keeps zero in range.
+  if (min > 0) min = min - (max - min) * 0.15;
   if (max < 0) max = 0;
   const pad = (max - min) * 0.12;
   min -= pad; max += pad;
@@ -54,6 +56,8 @@ export function lineChart(series, options = {}) {
     svg += `<line x1="${padL}" y1="${y(0)}" x2="${width - padR}" y2="${y(0)}" stroke="#9aa8a5" stroke-width="1"/>`;
   }
   const points = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const baseY = y(Math.max(min, 0));
+  svg += `<polygon points="${padL},${baseY.toFixed(1)} ${points} ${x(values.length - 1).toFixed(1)},${baseY.toFixed(1)}" fill="${TEAL}" fill-opacity="0.10"/>`;
   svg += `<polyline points="${points}" fill="none" stroke="${TEAL}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
   values.forEach((v, i) => {
     const negative = v < 0;
@@ -158,6 +162,51 @@ export function donutChart(items, options = {}) {
   });
   legend += '</ul>';
   return { svg, legend };
+}
+
+// Indexed comparison chart: two or more series rebased to 100 in their
+// first year, so indicators in different units can be compared on one
+// chart. seriesList = [{ label, years, values, color }].
+export function multiLineChart(seriesList, options = {}) {
+  const width = options.width || 640;
+  const height = options.height || 300;
+  const padL = 52, padR = 16, padT = 26, padB = 34;
+  const indexed = seriesList.map((s) => ({
+    ...s,
+    indexed: s.values.map((v) => (v / s.values[0]) * 100),
+  }));
+  const all = indexed.flatMap((s) => s.indexed);
+  let min = Math.min(...all);
+  let max = Math.max(...all);
+  const pad = (max - min) * 0.15;
+  min -= pad; max += pad;
+  const years = seriesList[0].years;
+  const x = (i) => padL + (i * (width - padL - padR)) / (years.length - 1);
+  const y = (v) => padT + ((max - v) * (height - padT - padB)) / (max - min);
+  const ticks = niceTicks(min, max, 4);
+  let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Indexed comparison chart" xmlns="http://www.w3.org/2000/svg">`;
+  for (const t of ticks) {
+    svg += `<line x1="${padL}" y1="${y(t)}" x2="${width - padR}" y2="${y(t)}" stroke="${GRID}" stroke-width="1"/>`;
+    svg += `<text x="${padL - 8}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="#5a6b68">${fmt(t)}</text>`;
+  }
+  svg += `<line x1="${padL}" y1="${y(100)}" x2="${width - padR}" y2="${y(100)}" stroke="#9aa8a5" stroke-width="1" stroke-dasharray="4 3"/>`;
+  indexed.forEach((s) => {
+    const points = s.indexed.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    svg += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s.indexed.forEach((v, i) => {
+      svg += `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${s.color}" stroke="#fff" stroke-width="1.5"/>`;
+    });
+    const last = s.indexed[s.indexed.length - 1];
+    svg += `<text x="${x(years.length - 1)}" y="${y(last) - 9}" text-anchor="middle" font-size="11" font-weight="700" fill="${s.color}">${fmt(last)}</text>`;
+  });
+  years.forEach((yr, i) => {
+    svg += `<text x="${x(i)}" y="${height - 12}" text-anchor="middle" font-size="11" fill="#5a6b68">${yr}</text>`;
+  });
+  svg += '</svg>';
+  let legend = '<p class="legend-line">';
+  legend += indexed.map((s) => `<span class="swatch" style="background:${s.color}"></span>${esc(s.label)}`).join(' &nbsp; ');
+  legend += '</p>';
+  return svg + legend;
 }
 
 // Grouped vertical bar chart for two series on the same years.

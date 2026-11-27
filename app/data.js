@@ -33,6 +33,9 @@ export const SERIES = {
   imports: { label: 'Imports of goods', unit: 'US$ billion', source: 'BPS foreign trade', values: [171.3, 141.6, 196.2, 237.4, 221.9, 233.7] },
   lifeExpectancy: { label: 'Life expectancy at birth', unit: 'years', source: 'BPS / World Bank', values: [71.4, 71.7, 72.2, 73.2, 73.9, 74.2] },
   hdi: { label: 'Human Development Index', unit: 'index (0-100)', source: 'BPS', values: [71.92, 71.94, 72.29, 73.55, 74.39, 75.02] },
+  gdpPerCapita: { label: 'GDP per capita', unit: 'US$', source: 'World Bank, World Development Indicators', values: [4107, 3854, 4287, 4731, 4876, 4925] },
+  fertility: { label: 'Total fertility rate', unit: 'births per woman', source: 'World Bank, World Development Indicators', values: [2.21, 2.19, 2.17, 2.15, 2.13, 2.12] },
+  urbanShare: { label: 'Urban population', unit: '% of population', source: 'World Bank, World Development Indicators', values: [55.7, 56.3, 56.9, 57.5, 58.1, 58.8] },
 };
 
 // GDP by sector, share of GDP 2024 (%). Source: BPS national accounts.
@@ -144,3 +147,24 @@ export function tradeBalance(yearIndex) {
 export function density(province) {
   return Math.round((province.pop * 1e6) / province.area);
 }
+
+// Every indicator on the site, with the publication it comes from. Shown
+// on the Sources page so any figure can be checked back to its origin.
+export const SOURCES = [
+  { indicator: 'Population', figure: '281.6 million (2024)', source: 'BPS, population projection', detail: 'Mid-year population; Java holds about 56% of it.' },
+  { indicator: 'GDP, current prices', figure: 'Rp 22,139 trillion (2024)', source: 'BPS, national accounts', detail: 'Gross domestic product at current market prices.' },
+  { indicator: 'Real GDP growth', figure: '5.03% (2024)', source: 'BPS, national accounts', detail: 'Growth of GDP at constant 2010 prices, year on year.' },
+  { indicator: 'GDP per capita', figure: 'US$ 4,925 (2024)', source: 'World Bank, World Development Indicators', detail: 'GDP at current US dollars divided by mid-year population.' },
+  { indicator: 'Inflation', figure: '1.57% (December 2024, y-on-y)', source: 'BPS, consumer price index', detail: 'CPI basket in 90 cities, weights from the 2022 cost-of-living survey.' },
+  { indicator: 'Unemployment rate', figure: '4.76% (August 2024)', source: 'BPS, labour force survey (Sakernas)', detail: 'Open unemployment as a share of the labour force.' },
+  { indicator: 'Poverty rate', figure: '8.57% (September 2024)', source: 'BPS, poverty statistics', detail: 'Share of the population below the national poverty line; 24.06 million people.' },
+  { indicator: 'Exports / imports of goods', figure: 'US$ 264.7 bn / US$ 233.7 bn (2024)', source: 'BPS, foreign trade statistics', detail: 'Merchandise trade; 2024 surplus US$ 31.0 billion.' },
+  { indicator: 'Life expectancy at birth', figure: '74.2 years (2024)', source: 'BPS', detail: 'Based on census and survey mortality data.' },
+  { indicator: 'Human Development Index', figure: '75.02 (2024)', source: 'BPS', detail: 'Composite of health, education and living-standard indices; above 70 is high.' },
+  { indicator: 'Total fertility rate', figure: '2.12 births per woman (2024)', source: 'World Bank, World Development Indicators', detail: 'Births a woman would have over her lifetime at current age-specific rates.' },
+  { indicator: 'Urban population', figure: '58.8% of the population (2024)', source: 'World Bank, World Development Indicators', detail: 'Share of the population living in areas defined as urban.' },
+  { indicator: 'Mean years of schooling', figure: '9.1 years (2024)', source: 'BPS', detail: 'Average schooling completed by the population aged 25 and over.' },
+  { indicator: 'Internet users', figure: '221.6 million (2024)', source: 'APJII survey', detail: 'Indonesian Internet Service Providers Association annual survey.' },
+  { indicator: 'Age structure', figure: 'Median age 30.5 years (2024)', source: 'BPS, population projection', detail: 'Five-year age bands; more than half the population is under 31.' },
+  { indicator: 'Provinces', figure: '12 largest provinces (2024)', source: 'BPS, population projection and area figures', detail: 'Population, land area and approximate share of national GDP per province.' },
+];
