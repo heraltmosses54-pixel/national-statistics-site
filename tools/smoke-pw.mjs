@@ -5,7 +5,7 @@
 import { chromium } from 'playwright-core';
 
 const base = (process.argv.find((a) => a.startsWith('--base=')) || '--base=http://127.0.0.1:8080').slice(7);
-const routes = ['', 'population', 'economy', 'prices', 'employment', 'regions', 'explorer'];
+const routes = ['', 'population', 'people', 'economy', 'prices', 'employment', 'regions', 'explorer', 'sources'];
 const errors = [];
 const fails = [];
 const passes = [];
@@ -36,8 +36,8 @@ try {
     const label = r === '' ? 'dashboard' : r;
     if (info.viewLen < 200 || !info.heading) {
       fails.push(`${label}: view empty or no heading (len=${info.viewLen})`);
-    } else if (info.links.length !== 7) {
-      fails.push(`${label}: expected 7 nav links, got ${info.links.length}`);
+    } else if (info.links.length !== 9) {
+      fails.push(`${label}: expected 9 nav links, got ${info.links.length}`);
     } else {
       passes.push(`${label}: heading "${info.heading}", ${info.svgs} svg chart(s), view ${info.viewLen} chars`);
     }
@@ -70,6 +70,29 @@ try {
     passes.push(`explorer: indicator->GDP, from->2021 => "${exAfter.h2}" / "${exAfter.sub}", ${exAfter.rows} table rows`);
   } else {
     fails.push(`explorer update: before="${exBefore}" after=${JSON.stringify(exAfter)}`);
+  }
+
+  // Explorer compare: default compare is GDP growth; switching it off and
+  // on must change the comparison card.
+  await page.goto(`${base}/#/explorer`, { waitUntil: 'load' });
+  await page.waitForTimeout(600);
+  const cmpOn = await page.evaluate(() => [...document.querySelectorAll('#view h2')].some((h) => h.textContent.startsWith('Compare:')));
+  await page.selectOption('#explorer-compare', '');
+  await page.waitForTimeout(300);
+  const cmpOff = await page.evaluate(() => [...document.querySelectorAll('#view h2')].some((h) => h.textContent.startsWith('Compare:')));
+  if (cmpOn && !cmpOff) passes.push('explorer compare: comparison card shown by default, hidden when set to none');
+  else fails.push(`explorer compare: on=${cmpOn} off=${cmpOff}`);
+
+  // Regions search: typing "jawa" must narrow the table to the Java provinces.
+  await page.goto(`${base}/#/regions`, { waitUntil: 'load' });
+  await page.waitForTimeout(600);
+  await page.fill('#region-search', 'jawa');
+  await page.waitForTimeout(300);
+  const regionRows = await page.evaluate(() => [...document.querySelectorAll('#view tbody tr td:first-child')].map((td) => td.textContent));
+  if (regionRows.length === 3 && regionRows.every((n) => n.toLowerCase().includes('jawa'))) {
+    passes.push(`regions search: "jawa" -> ${regionRows.join(', ')}`);
+  } else {
+    fails.push(`regions search: rows=${JSON.stringify(regionRows)}`);
   }
 
   // Every nav link leads to a distinct heading (no dead links).
